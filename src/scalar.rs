@@ -358,7 +358,14 @@ impl Scalar {
 
     /// Converts from an integer represented in little endian
     /// into its (congruent) `Scalar` representation.
+    #[cfg(not(all(target_os = "zkvm", target_arch = "riscv32")))]
     pub const fn from_raw(val: [u64; 4]) -> Self {
+        (&Scalar(val)).mul(&R2)
+    }
+
+    /// RISCZero patch (just non-const fn)
+    #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
+    pub fn from_raw(val: [u64; 4]) -> Self {
         (&Scalar(val)).mul(&R2)
     }
 
@@ -576,6 +583,7 @@ impl Scalar {
     }
 
     /// Multiplies `rhs` by `self`, returning the result.
+    #[cfg(not(all(target_os = "zkvm", target_arch = "riscv32")))]
     #[inline]
     pub const fn mul(&self, rhs: &Self) -> Self {
         // Schoolbook multiplication
@@ -601,6 +609,22 @@ impl Scalar {
         let (r6, r7) = mac(r6, self.0[3], rhs.0[3], carry);
 
         Scalar::montgomery_reduce(r0, r1, r2, r3, r4, r5, r6, r7)
+    }
+
+    /// RISCZero patch (naive Montgomery form mult)
+    #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
+    #[inline]
+    pub fn mul(&self, rhs: &Self) -> Self {
+        let mut tmp = [0u32; 8];
+        let mut result = [0u32; 8];
+        let lhs: [u32; 8] = bytemuck::cast(self.0);
+        let rhs: [u32; 8] = bytemuck::cast(rhs.0);
+        let prime: [u32; 8] = bytemuck::cast(MODULUS.0);
+        field::modmul_256(&lhs, &rhs, &prime, &mut tmp);
+        let r_inverse: [u32; 8] = bytemuck::cast(R_INV.0);
+        field::modmul_256(&tmp, &r_inverse, &prime, &mut result);
+        let ret: [u64; 4] = bytemuck::cast(result);
+        Scalar(ret)
     }
 
     /// Subtracts `rhs` from `self`, returning the result.

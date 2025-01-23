@@ -19,12 +19,6 @@ use bls12_381::Scalar;
 risc0_zkvm::guest::entry!(main);
 
 fn main() {
-    // const LARGEST: Scalar = Scalar([
-    //     0xffff_ffff_0000_0000,
-    //     0x53bd_a402_fffe_5bfe,
-    //     0x3339_d808_09a1_d805,
-    //     0x73ed_a753_299d_7d48,
-    // ]);
     const LARGEST: Scalar = Scalar::set_raw([
         0xffff_ffff_0000_0000,
         0x53bd_a402_fffe_5bfe,
@@ -37,12 +31,6 @@ fn main() {
 
     assert_eq!(
         tmp,
-        // Scalar([
-        //     0xffff_fffe_ffff_ffff,
-        //     0x53bd_a402_fffe_5bfe,
-        //     0x3339_d808_09a1_d805,
-        //     0x73ed_a753_299d_7d48,
-        // ])
         Scalar::set_raw([
             0xffff_fffe_ffff_ffff,
             0x53bd_a402_fffe_5bfe,
@@ -56,4 +44,10 @@ fn main() {
     tmp += &Scalar::set_raw([1, 0, 0, 0]);
 
     assert_eq!(tmp, Scalar::zero());
+
+    for j in 0..9 {
+      let mut tmp1 = Scalar::from_raw([j, 0, 0, 0]);
+      tmp1 *= &Scalar::from_raw([j+1, 0, 0, 0]);
+      assert_eq!(tmp1, Scalar::from_raw([j*(j+1),0,0,0]));
+    }
 }
