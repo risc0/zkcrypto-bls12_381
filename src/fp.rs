@@ -149,6 +149,10 @@ impl<'a, 'b> Add<&'b Fp> for &'a Fp {
 
     #[inline]
     fn add(self, rhs: &'b Fp) -> Fp {
+        // TODO this fn is being called, and not using the accelerated zkvm_add. Keep in mind that
+        // when using `Add<..>` (a + b), `AddAssign<..>` (a += b), `Mul<..>` (a * b), or any op
+        // like that on a custom type, these trait impls are being called. If you want to see this
+        // show up on the profile, use `#[inline(never)]` on this function.
         self.add(rhs)
     }
 }
@@ -440,10 +444,16 @@ impl Fp {
     #[inline]
     pub fn add_zkvm(&self, rhs: &Fp) -> Fp {
         let mut result = [0u32; 12];
-        let lhs: [u32; 12] = bytemuck::cast(self.0);
-        let rhs: [u32; 12] = bytemuck::cast(rhs.0);
-        let prime: [u32; 12] = bytemuck::cast(MODULUS);
+        // TODO switched to cast_ref here, UT. Compiler may optimize away the memcpy, but safer to
+        // avoid altogether.
+        let lhs: &[u32; 12] = bytemuck::cast_ref(&self.0);
+        let rhs: &[u32; 12] = bytemuck::cast_ref(&rhs.0);
+        let prime: &[u32; 12] = bytemuck::cast_ref(&MODULUS);
+        // TODO this is broken without zkvm config -- make sure cfg is applied again to this fn
         field::modadd_384(&lhs, &rhs, &prime, &mut result);
+
+        // TODO may want to have a mut reference to the result buffer passed into this function,
+        // such that you do not need to copy the result into a new buffer for every OP.
         let ret: [u64; 6] = bytemuck::cast(result);
         Fp(ret)
     }
@@ -559,6 +569,8 @@ impl Fp {
         //a.iter().zip(b.iter()).fold(Fp::zero(), |acc, (a_i, b_i)| acc + a_i * b_i).subtract_p()
         let mut sum = Fp::zero();
         for j in 0..T {
+            // TODO each of these operations will copy the value into sum. Ideally you pass a mut
+            // reference to sum and then you can use modadd precompile.
           sum = sum.add_zkvm(&(a[j]*b[j]));
         }
         //(&sum).subtract_p()

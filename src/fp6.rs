@@ -271,6 +271,9 @@ impl Fp6 {
         //
         // Each of these is a "sum of products", which we can compute efficiently.
 
+        // TODO this is a hotspot of memcpys. anytime you see these following operations, likely
+        // there will be a memset operation to initialize the buffer (b10.. and b20.. here) as well
+        // as memcpy for the adds going through Add<Fp2> 
         let a = self;
         let b10_p_b11 = b.c1.c0 + b.c1.c1;
         let b10_m_b11 = b.c1.c0 - b.c1.c1;

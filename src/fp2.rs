@@ -205,6 +205,9 @@ impl Fp2 {
 
     #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
     pub fn square(&self) -> Fp2 {
+        // TODO this logic seems the same as unaccelerated. Is this planned to switch? Looks like it
+        // calls native impl. If accelerated, there are some minimal copies done here that may not
+        // be necessary if you re-use result buffers.
         let a = (&self.c0).add(&self.c1);
         //let b = (&self.c1).neg().add(&self.c0);
         let b = (&self.c0).sub(&self.c1);

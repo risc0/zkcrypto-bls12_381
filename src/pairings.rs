@@ -131,6 +131,8 @@ impl MillerLoopResult {
             tmp.conjugate()
         }
 
+        // TODO this logic has a lot of memcpys, and hard to tell from a glance, what I would do is
+        // add #[inline(never)] to each of these functions, to see where specifically they are.
         let mut f = self.0;
         let mut t0 = f
             .frobenius_map()
@@ -838,6 +840,8 @@ fn ell(f: Fp12, coeffs: &(Fp2, Fp2, Fp2), p: &G1Affine) -> Fp12 {
 
 fn doubling_step(r: &mut G2Projective) -> (Fp2, Fp2, Fp2) {
     // Adaptation of Algorithm 26, https://eprint.iacr.org/2010/354.pdf
+    // TODO would be a bit tedious to optimize this, but some of these ops seem like they could be
+    // optimized to avoid memcpys by sharing result buffers.
     let tmp0 = r.x.square();
     let tmp1 = r.y.square();
     let tmp2 = tmp1.square();
