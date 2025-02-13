@@ -18,7 +18,8 @@ rustdoc-args = ["--html-in-header", "katex-header.html"]
 [dependencies]
 #risc0-bigint2 = { version = "1.2.1", default-features = false, features = [ "unstable", ] }
 bytemuck = { version ="1.21.0", features = ["derive", "min_const_generics"]}
-risc0-bigint2 = { path = "../risc0/risc0/bigint2", default-features = false, features = [ "unstable", ] }
+# TODO: Get a tag stabilized and use it
+risc0-bigint2 = { git = "https://github.com/risc0/risc0", rev = "c9793bfb6ef5022df8e34733ea422700bdcba852", default-features = false, features = [ "unstable", ] }
 
 [dev-dependencies]
 csv = ">= 1.0, < 1.2" # csv 1.2 has MSRV 1.60

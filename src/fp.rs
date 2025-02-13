@@ -90,6 +90,7 @@ pub const MODULUS: [u64; 6] = [
 ];
 
 
+#[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
 pub const MODULUS_SQR: [u64; 12] = [
     0x26aa_0000_1c71_8e39,
     0x7ced_6b1d_7638_2eab,
@@ -241,7 +242,7 @@ impl Fp {
 
         // Convert to Montgomery form by computing
         // (a.R^0 * R^2) / R = a.R
-        #[cfg(not(all(target_os = "zkvm", target_arch = "riscv32")))] //TODO: untested
+        #[cfg(not(all(target_os = "zkvm", target_arch = "riscv32")))]
         { tmp *= &R2; }
 
         CtOption::new(tmp, Choice::from(is_some))
@@ -258,7 +259,7 @@ impl Fp {
             self.0[0], self.0[1], self.0[2], self.0[3], self.0[4], self.0[5], 0, 0, 0, 0, 0, 0,
         );
 
-        #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))] //TODO: untested
+        #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
         let tmp = self;
 
         let mut res = [0; 48];
@@ -333,7 +334,7 @@ impl Fp {
             self.0[0], self.0[1], self.0[2], self.0[3], self.0[4], self.0[5], 0, 0, 0, 0, 0, 0,
         );
 
-        #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))] //TODO: untested
+        #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
         let tmp = self;
 
         let (_, borrow) = sbb(tmp.0[0], 0xdcff_7fff_ffff_d556, 0);
@@ -447,7 +448,6 @@ impl Fp {
         Fp([r0, r1, r2, r3, r4, r5])
     }
 
-    //#[cfg(not(all(target_os = "zkvm", target_arch = "riscv32")))]
     #[inline]
     pub const fn add(&self, rhs: &Fp) -> Fp {
         let (d0, carry) = adc(self.0[0], rhs.0[0], 0);
@@ -578,26 +578,7 @@ impl Fp {
         (&Fp([u0, u1, u2, u3, u4, u5])).subtract_p()
     }
 
-/*
-    #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
-    #[inline]
-    pub(crate) fn sum_of_products<const T: usize>(a: [Fp; T], b: [Fp; T]) -> Fp {
-        //a.iter().zip(b.iter()).fold(Fp::zero(), |acc, (a_i, b_i)| acc + a_i * b_i).subtract_p()
-        let mut sum = Fp::zero();
-        for j in 0..T {
-          sum = sum.add_zkvm(&(a[j]*b[j]));
-        }
-        //(&sum).subtract_p()
-        sum
-    }
-
-    #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
-    #[inline]
-    pub(crate) fn sum_of_two_products(a0: &Fp, a1: &Fp, b0: &Fp, b1: &Fp) -> Fp {
-        (a0*b0).add_zkvm(&(a1*b1))
-    }
-*/
-
+    /// RISCZero patch (sum_of_two_products already replaced by deg2 patch)
     #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
     #[inline]
     pub(crate) fn sum_of_six_products(a0: &Fp, a1: &Fp, a2: &Fp,

@@ -14,8 +14,6 @@
 
 #![no_main]
 
-//use bls12_381::*;
-
 risc0_zkvm::guest::entry!(main);
 
 fn test_pairing_result_against_relic() {
@@ -23,15 +21,6 @@ fn test_pairing_result_against_relic() {
     let b = bls12_381::G2Affine::generator();
 
     let res = bls12_381::pairing(&a, &b);
-
-/*
-    let prep = G2Prepared::from(b);
-
-    assert_eq!(
-        res,
-        multi_miller_loop(&[(&a, &prep)]).final_exponentiation()
-    );
-*/
 
     assert_eq!( // each const * R_INV (mod p)
         res.all_raw(),

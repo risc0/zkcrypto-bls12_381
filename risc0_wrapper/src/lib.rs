@@ -17,16 +17,13 @@
 use risc0_wrapper_methods::WRAPPER_ELF;
 use risc0_zkvm::{default_prover, ExecutorEnv};
 
-// Compute the product a*b inside the zkVM
 pub fn run_test() -> () {
-    // TODO HERE
     let env = ExecutorEnv::builder().build().unwrap();
 
     // Obtain the default prover.
     let prover = default_prover();
 
-    // Produce a receipt by proving the specified ELF binary.
-    let _receipt = prover.prove(env, WRAPPER_ELF).unwrap().receipt;
+    assert!(prover.prove(env, WRAPPER_ELF).is_ok());
 }
 
 #[cfg(test)]

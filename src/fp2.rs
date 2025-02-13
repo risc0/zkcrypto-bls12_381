@@ -6,7 +6,11 @@ use rand_core::RngCore;
 use subtle::{Choice, ConditionallySelectable, ConstantTimeEq, CtOption};
 
 use crate::fp::Fp;
+
+#[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
 use crate::fp::MODULUS;
+
+#[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
 use crate::fp::MODULUS_SQR;
 
 #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]

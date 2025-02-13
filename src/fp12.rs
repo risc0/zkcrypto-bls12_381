@@ -141,7 +141,8 @@ impl Fp12 {
     }
 
     /// Raises this element to p.
-    //#[inline(always)] //TODO: RISCZero patch
+
+    #[cfg_attr(not(all(target_os = "zkvm", target_arch = "riscv32")), inline(always))]
     pub fn frobenius_map(&self) -> Self {
         let c0 = self.c0.frobenius_map();
         let c1 = self.c1.frobenius_map();

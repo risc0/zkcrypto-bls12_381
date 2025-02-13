@@ -184,7 +184,7 @@ const B: Fp = Fp::from_raw_unchecked([
 ]);
 
 #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
-const B: Fp = Fp::from_raw_unchecked([ //TODO: untested
+const B: Fp = Fp::from_raw_unchecked([
     0x0000_0000_0000_0004,
     0x0000_0000_0000_0000,
     0x0000_0000_0000_0000,
@@ -465,7 +465,7 @@ pub const BETA: Fp = Fp::from_raw_unchecked([
 ]);
 
 #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
-pub const BETA: Fp = Fp::from_raw_unchecked([ //TODO: untested
+pub const BETA: Fp = Fp::from_raw_unchecked([
     0x2e01_ffff_fffe_fffe,
     0xde17_d813_620a_0002,
     0xddb3_a93b_e6f8_9688,
