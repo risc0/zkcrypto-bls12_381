@@ -259,12 +259,20 @@ impl Gt {
     /// RISCZero patch: raw data for external crate testing
     #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
     pub fn all_raw(&self) -> [[u64; 6]; 12] {
-        [self.0.c0.c0.c0.0, self.0.c0.c0.c1.0,
-         self.0.c0.c1.c0.0, self.0.c0.c1.c1.0,
-         self.0.c0.c2.c0.0, self.0.c0.c2.c1.0,
-         self.0.c1.c0.c0.0, self.0.c1.c0.c1.0,
-         self.0.c1.c1.c0.0, self.0.c1.c1.c1.0,
-         self.0.c1.c2.c0.0, self.0.c1.c2.c1.0]
+        [
+            self.0.c0.c0.c0.0,
+            self.0.c0.c0.c1.0,
+            self.0.c0.c1.c0.0,
+            self.0.c0.c1.c1.0,
+            self.0.c0.c2.c0.0,
+            self.0.c0.c2.c1.0,
+            self.0.c1.c0.c0.0,
+            self.0.c1.c0.c1.0,
+            self.0.c1.c1.c0.0,
+            self.0.c1.c1.c1.0,
+            self.0.c1.c2.c0.0,
+            self.0.c1.c2.c1.0,
+        ]
     }
 }
 
@@ -487,8 +495,9 @@ impl Group for Gt {
     }
 
     #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
-    fn generator() -> Self { //TODO: untested
-        Gt(Fp12 { // each const * R_INV (mod p)
+    fn generator() -> Self {
+        Gt(Fp12 {
+            // each const * R_INV (mod p)
             c0: Fp6 {
                 c0: Fp2 {
                     c0: Fp::from_raw_unchecked([

@@ -89,7 +89,6 @@ pub const MODULUS: [u64; 6] = [
     0x1a01_11ea_397f_e69a,
 ];
 
-
 #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
 pub const MODULUS_SQR: [u64; 12] = [
     0x26aa_0000_1c71_8e39,
@@ -105,7 +104,6 @@ pub const MODULUS_SQR: [u64; 12] = [
     0x4bd2_78ea_a22f_25e9,
     0x02a4_37a4_b8c3_5fc7,
 ];
-
 
 /// INV = -(p^{-1} mod 2^64) mod 2^64
 #[cfg(not(all(target_os = "zkvm", target_arch = "riscv32")))]
@@ -243,7 +241,9 @@ impl Fp {
         // Convert to Montgomery form by computing
         // (a.R^0 * R^2) / R = a.R
         #[cfg(not(all(target_os = "zkvm", target_arch = "riscv32")))]
-        { tmp *= &R2; }
+        {
+            tmp *= &R2;
+        }
 
         CtOption::new(tmp, Choice::from(is_some))
     }
@@ -417,7 +417,7 @@ impl Fp {
     #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
     pub fn invert(&self) -> CtOption<Self> {
         if self.is_zero().into() {
-          return CtOption::new(Fp::zero(), Choice::from(0u8));
+            return CtOption::new(Fp::zero(), Choice::from(0u8));
         }
         let mut result = [0u32; 12];
         let lhs: &[u32; 12] = &bytemuck::cast_ref(&self.0);
@@ -581,15 +581,26 @@ impl Fp {
     /// RISCZero patch (sum_of_two_products already replaced by deg2 patch)
     #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
     #[inline]
-    pub(crate) fn sum_of_six_products(a0: &Fp, a1: &Fp, a2: &Fp,
-                                      a3: &Fp, a4: &Fp, a5: &Fp,
-                                      b0: &Fp, b1: &Fp, b2: &Fp,
-                                      b3: &Fp, b4: &Fp, b5: &Fp) -> Fp {
-        (a0*b0).add_zkvm(&(a1*b1))
-               .add_zkvm(&(a2*b2))
-               .add_zkvm(&(a3*b3))
-               .add_zkvm(&(a4*b4))
-               .add_zkvm(&(a5*b5))
+    pub(crate) fn sum_of_six_products(
+        a0: &Fp,
+        a1: &Fp,
+        a2: &Fp,
+        a3: &Fp,
+        a4: &Fp,
+        a5: &Fp,
+        b0: &Fp,
+        b1: &Fp,
+        b2: &Fp,
+        b3: &Fp,
+        b4: &Fp,
+        b5: &Fp,
+    ) -> Fp {
+        (a0 * b0)
+            .add_zkvm(&(a1 * b1))
+            .add_zkvm(&(a2 * b2))
+            .add_zkvm(&(a3 * b3))
+            .add_zkvm(&(a4 * b4))
+            .add_zkvm(&(a5 * b5))
     }
 
     #[cfg(not(all(target_os = "zkvm", target_arch = "riscv32")))]

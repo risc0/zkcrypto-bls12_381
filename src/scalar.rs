@@ -526,7 +526,7 @@ impl Scalar {
     #[inline]
     pub fn invert(&self) -> CtOption<Self> {
         if self.is_zero().into() {
-          return CtOption::new(Scalar::zero(), Choice::from(0u8));
+            return CtOption::new(Scalar::zero(), Choice::from(0u8));
         }
         let mut result = [0u32; 8];
         let lhs: [u32; 8] = bytemuck::cast(self.0);

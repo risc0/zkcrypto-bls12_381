@@ -1020,7 +1020,7 @@ impl HashToField for Fp {
         ]);
 
         #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
-        const F_2_256: Fp = Fp::from_raw_unchecked([0,0,0,0,1,0]);
+        const F_2_256: Fp = Fp::from_raw_unchecked([0, 0, 0, 0, 1, 0]);
 
         let mut bs = [0u8; 48];
         bs[16..].copy_from_slice(&okm[..32]);

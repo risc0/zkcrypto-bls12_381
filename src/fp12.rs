@@ -171,7 +171,8 @@ impl Fp12 {
 
         #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
         let c1 = c1
-            * Fp6::from(Fp2 { // each const * R_INV (mod p)
+            * Fp6::from(Fp2 {
+                // each const * R_INV (mod p)
                 c0: Fp::from_raw_unchecked([
                     0x8d07_75ed_9223_5fb8,
                     0xf67e_a53d_63e7_813d,

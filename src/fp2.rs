@@ -227,8 +227,7 @@ impl Fp2 {
         let lhs_arr: &[[u32; 12]; 2] = bytemuck::cast_ref(self);
         let prime: &[u32; 12] = bytemuck::cast_ref(&MODULUS);
         let prsqr: &[u32; 24] = bytemuck::cast_ref(&MODULUS_SQR);
-        field::extfield_xxone_mul_384(&lhs_arr, &lhs_arr,
-            prime, prsqr, &mut result);
+        field::extfield_xxone_mul_384(&lhs_arr, &lhs_arr, prime, prsqr, &mut result);
         let ret0: [u64; 6] = bytemuck::cast(result[0]);
         let ret1: [u64; 6] = bytemuck::cast(result[1]);
         Fp2 {
@@ -264,8 +263,7 @@ impl Fp2 {
         let rhs_arr: &[[u32; 12]; 2] = bytemuck::cast_ref(rhs);
         let prime: &[u32; 12] = bytemuck::cast_ref(&MODULUS);
         let prsqr: &[u32; 24] = bytemuck::cast_ref(&MODULUS_SQR);
-        field::extfield_xxone_mul_384(&lhs_arr, &rhs_arr,
-            prime, prsqr, &mut result);
+        field::extfield_xxone_mul_384(&lhs_arr, &rhs_arr, prime, prsqr, &mut result);
         let ret0: [u64; 6] = bytemuck::cast(result[0]);
         let ret1: [u64; 6] = bytemuck::cast(result[1]);
 
