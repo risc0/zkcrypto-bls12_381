@@ -105,6 +105,23 @@ pub const MODULUS_SQR: [u64; 12] = [
     0x02a4_37a4_b8c3_5fc7,
 ];
 
+#[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
+pub const MODULUS_SQR5: [u64; 12] = [
+    0xc152_0000_8e37_c71d,
+    0x70a3_1793_4f18_e957,
+    0x6edd_0190_ea56_30f3,
+    0x01bd_d9a2_3838_944f,
+    0xcde8_9c4a_32d8_216f,
+    0x9309_e80e_9e79_ce67,
+    0xc9f6_6dff_2f5c_ab05,
+    0x933e_e0f1_7254_f42a,
+    0x027c_176e_0718_bb11,
+    0x6e4e_d479_4831_6186,
+    0x7b1c_5c95_2aeb_bd91,
+    0x0d35_1637_9bd0_dee4,
+];
+
+
 /// INV = -(p^{-1} mod 2^64) mod 2^64
 #[cfg(not(all(target_os = "zkvm", target_arch = "riscv32")))]
 const INV: u64 = 0x89f3_fffc_fffc_fffd;
@@ -578,6 +595,7 @@ impl Fp {
         (&Fp([u0, u1, u2, u3, u4, u5])).subtract_p()
     }
 
+/*
     /// RISCZero patch (sum_of_two_products already replaced by deg2 patch)
     #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
     #[inline]
@@ -602,6 +620,7 @@ impl Fp {
             .add_zkvm(&(a4 * b4))
             .add_zkvm(&(a5 * b5))
     }
+*/
 
     #[cfg(not(all(target_os = "zkvm", target_arch = "riscv32")))]
     #[inline(always)]

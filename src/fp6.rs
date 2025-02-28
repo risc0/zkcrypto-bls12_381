@@ -8,7 +8,20 @@ use subtle::{Choice, ConditionallySelectable, ConstantTimeEq, CtOption};
 #[cfg(feature = "pairings")]
 use rand_core::RngCore;
 
+#[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
+use risc0_bigint2::field;
+
 /// This represents an element $c_0 + c_1 v + c_2 v^2$ of $\mathbb{F}_{p^6} = \mathbb{F}_{p^2} / v^3 - u - 1$.
+#[cfg(not(all(target_os = "zkvm", target_arch = "riscv32")))]
+pub struct Fp6 {
+    pub c0: Fp2,
+    pub c1: Fp2,
+    pub c2: Fp2,
+}
+
+#[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
+#[derive(bytemuck::Pod, bytemuck::Zeroable)]
+#[repr(C)]
 pub struct Fp6 {
     pub c0: Fp2,
     pub c1: Fp2,
@@ -313,6 +326,38 @@ impl Fp6 {
     }
 
     #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
+    fn mul_interleaved(&self, b: &Self) -> Self {
+        let mut result = [[0u32; 12]; 6];
+        let lhs_arr: &[[u32; 12]; 6] = bytemuck::cast_ref(self);
+        let rhs_arr: &[[u32; 12]; 6] = bytemuck::cast_ref(b);
+        let prime: &[u32; 12] = bytemuck::cast_ref(&MODULUS);
+        let prsqr: &[u32; 24] = bytemuck::cast_ref(&MODULUS_SQR5);
+        field::extfield_degsix_mul_384(&lhs_arr, &rhs_arr, prime, prsqr, &mut result);
+        let ret0: [u64; 6] = bytemuck::cast(result[0]);
+        let ret1: [u64; 6] = bytemuck::cast(result[1]);
+        let ret2: [u64; 6] = bytemuck::cast(result[2]);
+        let ret3: [u64; 6] = bytemuck::cast(result[3]);
+        let ret4: [u64; 6] = bytemuck::cast(result[4]);
+        let ret5: [u64; 6] = bytemuck::cast(result[5]);
+
+        Fp6 {
+            c0: Fp2 {
+                c0: Fp(ret0),
+                c1: Fp(ret1),
+            },
+            c1: Fp2 {
+                c0: Fp(ret2),
+                c1: Fp(ret3),
+            },
+            c2: Fp2 {
+                c0: Fp(ret4),
+                c1: Fp(ret5),
+            },
+        }
+    }
+
+/*
+    #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
     #[inline]
     fn mul_interleaved(&self, b: &Self) -> Self {
         let a = self;
@@ -384,7 +429,9 @@ impl Fp6 {
             },
         }
     }
+*/
 
+    #[cfg(not(all(target_os = "zkvm", target_arch = "riscv32")))]
     #[inline]
     pub fn square(&self) -> Self {
         let s0 = self.c0.square();
@@ -399,6 +446,37 @@ impl Fp6 {
             c0: s3.mul_by_nonresidue() + s0,
             c1: s4.mul_by_nonresidue() + s1,
             c2: s1 + s2 + s3 - s0 - s4,
+        }
+    }
+
+    #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
+    #[inline]
+    pub fn square(&self) -> Self {
+        let mut result = [[0u32; 12]; 6];
+        let inp_arr: &[[u32; 12]; 6] = bytemuck::cast_ref(self);
+        let prime: &[u32; 12] = bytemuck::cast_ref(&MODULUS);
+        let prsqr: &[u32; 24] = bytemuck::cast_ref(&MODULUS_SQR5);
+        field::extfield_degsix_sqr_384(&inp_arr, prime, prsqr, &mut result);
+        let ret0: [u64; 6] = bytemuck::cast(result[0]);
+        let ret1: [u64; 6] = bytemuck::cast(result[1]);
+        let ret2: [u64; 6] = bytemuck::cast(result[2]);
+        let ret3: [u64; 6] = bytemuck::cast(result[3]);
+        let ret4: [u64; 6] = bytemuck::cast(result[4]);
+        let ret5: [u64; 6] = bytemuck::cast(result[5]);
+
+        Fp6 {
+            c0: Fp2 {
+                c0: Fp(ret0),
+                c1: Fp(ret1),
+            },
+            c1: Fp2 {
+                c0: Fp(ret2),
+                c1: Fp(ret3),
+            },
+            c2: Fp2 {
+                c0: Fp(ret4),
+                c1: Fp(ret5),
+            },
         }
     }
 

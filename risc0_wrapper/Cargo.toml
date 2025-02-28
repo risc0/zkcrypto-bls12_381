@@ -7,4 +7,4 @@ edition = "2021"
 risc0-wrapper-methods = { path = "methods" }
 #Switch this dependency once the necessary features are in a release
 #risc0-zkvm = { version = "1.2.1", features = [ "unstable", ] }
-risc0-zkvm = { git = "https://github.com/risc0/risc0", rev = "c9793bfb6ef5022df8e34733ea422700bdcba852", features = [ "unstable", ] }
+risc0-zkvm = { path = "../../risc0/risc0/zkvm", features = [ "unstable", ] }
