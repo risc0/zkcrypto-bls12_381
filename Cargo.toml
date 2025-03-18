@@ -16,7 +16,7 @@ edition = "2021"
 rustdoc-args = ["--html-in-header", "katex-header.html"]
 
 [dependencies]
-risc0-bigint2 = { version = "1.3.0", default-features = false, features = [ "unstable", ] }
+risc0-bigint2 = { version = "1.4.0-rc.2", default-features = false, features = [ "unstable" ] }
 bytemuck = { version ="1.21.0", features = ["derive", "min_const_generics"]}
 
 [dev-dependencies]
