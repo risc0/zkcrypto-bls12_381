@@ -13,9 +13,6 @@ use ff::{FieldBits, PrimeFieldBits};
 
 use crate::util::{adc, mac, sbb};
 
-#[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
-use risc0_bigint2::field;
-
 /// Represents an element of the scalar field $\mathbb{F}_q$ of the BLS12-381 elliptic
 /// curve construction.
 // The internal representation of this type is four 64-bit unsigned
@@ -248,17 +245,9 @@ impl Scalar {
     }
 
     /// Doubles this field element.
-    #[cfg(not(all(target_os = "zkvm", target_arch = "riscv32")))]
     #[inline]
     pub const fn double(&self) -> Scalar {
         // TODO: This can be achieved more efficiently with a bitshift.
-        self.add(self)
-    }
-
-    /// RISCZero patch (just non-const fn)
-    #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
-    #[inline]
-    pub fn double(&self) -> Scalar {
         self.add(self)
     }
 
@@ -343,15 +332,8 @@ impl Scalar {
 
     /// Converts from an integer represented in little endian
     /// into its (congruent) `Scalar` representation.
-    #[cfg(not(all(target_os = "zkvm", target_arch = "riscv32")))]
     pub const fn from_raw(val: [u64; 4]) -> Self {
         (&Scalar(val)).mul(&R2)
-    }
-
-    /// RISCZero patch: non-Montgomery
-    #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
-    pub const fn from_raw(val: [u64; 4]) -> Self {
-        Scalar(val)
     }
 
     /// Squares this element.
@@ -423,7 +405,6 @@ impl Scalar {
 
     /// Computes the multiplicative inverse of this element,
     /// failing if the element is zero.
-    #[cfg(not(all(target_os = "zkvm", target_arch = "riscv32")))]
     pub fn invert(&self) -> CtOption<Self> {
         #[inline(always)]
         fn square_assign_multi(n: &mut Scalar, num_times: usize) {
@@ -521,21 +502,6 @@ impl Scalar {
         CtOption::new(t0, !self.ct_eq(&Self::zero()))
     }
 
-    /// RISCZero patch: non-Montgomery mult
-    #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
-    #[inline]
-    pub fn invert(&self) -> CtOption<Self> {
-        if self.is_zero().into() {
-            return CtOption::new(Scalar::zero(), Choice::from(0u8));
-        }
-        let mut result = [0u32; 8];
-        let lhs: [u32; 8] = bytemuck::cast(self.0);
-        let prime: [u32; 8] = bytemuck::cast(MODULUS.0);
-        field::modinv_256(&lhs, &prime, &mut result);
-        let ret: [u64; 4] = bytemuck::cast(result);
-        CtOption::new(Scalar(ret), Choice::from(1u8))
-    }
-
     #[inline(always)]
     const fn montgomery_reduce(
         r0: u64,
@@ -584,7 +550,6 @@ impl Scalar {
     }
 
     /// Multiplies `rhs` by `self`, returning the result.
-    #[cfg(not(all(target_os = "zkvm", target_arch = "riscv32")))]
     #[inline]
     pub const fn mul(&self, rhs: &Self) -> Self {
         // Schoolbook multiplication
@@ -612,19 +577,6 @@ impl Scalar {
         Scalar::montgomery_reduce(r0, r1, r2, r3, r4, r5, r6, r7)
     }
 
-    /// RISCZero patch: non-Montgomery mult
-    #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
-    #[inline]
-    pub fn mul(&self, rhs: &Self) -> Self {
-        let mut result = [0u32; 8];
-        let lhs: [u32; 8] = bytemuck::cast(self.0);
-        let rhs: [u32; 8] = bytemuck::cast(rhs.0);
-        let prime: [u32; 8] = bytemuck::cast(MODULUS.0);
-        field::modmul_256(&lhs, &rhs, &prime, &mut result);
-        let ret: [u64; 4] = bytemuck::cast(result);
-        Scalar(ret)
-    }
-
     /// Subtracts `rhs` from `self`, returning the result.
     #[inline]
     pub const fn sub(&self, rhs: &Self) -> Self {
@@ -644,7 +596,6 @@ impl Scalar {
     }
 
     /// Adds `rhs` to `self`, returning the result.
-    #[cfg(not(all(target_os = "zkvm", target_arch = "riscv32")))]
     #[inline]
     pub const fn add(&self, rhs: &Self) -> Self {
         let (d0, carry) = adc(self.0[0], rhs.0[0], 0);
@@ -655,19 +606,6 @@ impl Scalar {
         // Attempt to subtract the modulus, to ensure the value
         // is smaller than the modulus.
         (&Scalar([d0, d1, d2, d3])).sub(&MODULUS)
-    }
-
-    /// RISCZero patch
-    #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
-    #[inline]
-    pub fn add(&self, rhs: &Self) -> Self {
-        let mut result = [0u32; 8];
-        let lhs: [u32; 8] = bytemuck::cast(self.0);
-        let rhs: [u32; 8] = bytemuck::cast(rhs.0);
-        let prime: [u32; 8] = bytemuck::cast(MODULUS.0);
-        field::modadd_256(&lhs, &rhs, &prime, &mut result);
-        let ret: [u64; 4] = bytemuck::cast(result);
-        Scalar(ret)
     }
 
     /// Negates `self`.
@@ -913,7 +851,10 @@ fn test_debug() {
 fn test_equality() {
     assert_eq!(Scalar::zero(), Scalar::zero());
     assert_eq!(Scalar::one(), Scalar::one());
-    assert_eq!(R2, R2);
+    #[allow(clippy::eq_op)]
+    {
+        assert_eq!(R2, R2);
+    }
 
     assert!(Scalar::zero() != Scalar::one());
     assert!(Scalar::one() != R2);
