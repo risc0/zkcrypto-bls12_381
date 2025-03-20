@@ -11,7 +11,10 @@ use subtle::{Choice, ConditionallySelectable, ConstantTimeEq, CtOption};
 #[cfg(feature = "bits")]
 use ff::{FieldBits, PrimeFieldBits};
 
-use crate::util::{adc, mac, sbb};
+use crate::util::{adc, sbb};
+
+#[cfg(not(all(target_os = "zkvm", target_arch = "riscv32")))]
+use crate::util::mac;
 
 #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
 use risc0_bigint2::field;
@@ -41,9 +44,17 @@ impl fmt::Display for Scalar {
     }
 }
 
+#[cfg(not(all(target_os = "zkvm", target_arch = "riscv32")))]
 impl From<u64> for Scalar {
     fn from(val: u64) -> Scalar {
         Scalar([val, 0, 0, 0]) * R2
+    }
+}
+
+#[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
+impl From<u64> for Scalar {
+    fn from(val: u64) -> Scalar {
+        Scalar([val, 0, 0, 0])
     }
 }
 
@@ -100,11 +111,20 @@ const MODULUS_LIMBS_32: [u32; 8] = [
 const MODULUS_BITS: u32 = 255;
 
 // GENERATOR = 7 (multiplicative generator of r-1 order, that is also quadratic nonresidue)
+#[cfg(not(all(target_os = "zkvm", target_arch = "riscv32")))]
 const GENERATOR: Scalar = Scalar([
     0x0000_000e_ffff_fff1,
     0x17e3_63d3_0018_9c0f,
     0xff9c_5787_6f84_57b0,
     0x3513_3220_8fc5_a8c4,
+]);
+
+#[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
+const GENERATOR: Scalar = Scalar([
+    0x0000_0000_0000_0007,
+    0x0000_0000_0000_0000,
+    0x0000_0000_0000_0000,
+    0x0000_0000_0000_0000,
 ]);
 
 impl<'a> Neg for &'a Scalar {
@@ -156,6 +176,7 @@ impl_binops_additive!(Scalar, Scalar);
 impl_binops_multiplicative!(Scalar, Scalar);
 
 /// INV = -(q^{-1} mod 2^64) mod 2^64
+#[cfg(not(all(target_os = "zkvm", target_arch = "riscv32")))]
 const INV: u64 = 0xffff_fffe_ffff_ffff;
 
 /// R = 2^256 mod q
@@ -175,6 +196,7 @@ const R2: Scalar = Scalar([
 ]);
 
 /// R^3 = 2^768 mod q
+#[cfg(not(all(target_os = "zkvm", target_arch = "riscv32")))]
 const R3: Scalar = Scalar([
     0xc62c_1807_439b_73af,
     0x1b3e_0d18_8cf0_6990,
@@ -183,11 +205,20 @@ const R3: Scalar = Scalar([
 ]);
 
 /// 2^-1
+#[cfg(not(all(target_os = "zkvm", target_arch = "riscv32")))]
 const TWO_INV: Scalar = Scalar([
     0x0000_0000_ffff_ffff,
     0xac42_5bfd_0001_a401,
     0xccc6_27f7_f65e_27fa,
     0x0c12_58ac_d662_82b7,
+]);
+
+#[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
+const TWO_INV: Scalar = Scalar([
+    0x7fff_ffff_8000_0001,
+    0xa9de_d201_7fff_2dff,
+    0x199c_ec04_04d0_ec02,
+    0x39f6_d3a9_94ce_bea4,
 ]);
 
 // 2^S * t = MODULUS - 1 with t odd
@@ -200,6 +231,7 @@ const S: u32 = 32;
 /// `GENERATOR = 7 mod q` is a generator
 /// of the q - 1 order multiplicative
 /// subgroup.
+#[cfg(not(all(target_os = "zkvm", target_arch = "riscv32")))]
 const ROOT_OF_UNITY: Scalar = Scalar([
     0xb9b5_8d8c_5f0e_466a,
     0x5b1b_4c80_1819_d7ec,
@@ -207,7 +239,16 @@ const ROOT_OF_UNITY: Scalar = Scalar([
     0x5bf3_adda_19e9_b27b,
 ]);
 
+#[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
+const ROOT_OF_UNITY: Scalar = Scalar([
+    0x3829_971f_439f_0d2b,
+    0xb636_8350_8c22_80b9,
+    0xd09b_6819_22c8_13b4,
+    0x16a2_a19e_dfe8_1f20,
+]);
+
 /// ROOT_OF_UNITY^-1
+#[cfg(not(all(target_os = "zkvm", target_arch = "riscv32")))]
 const ROOT_OF_UNITY_INV: Scalar = Scalar([
     0x4256_481a_dcf3_219a,
     0x45f3_7b7f_96b6_cad3,
@@ -215,13 +256,30 @@ const ROOT_OF_UNITY_INV: Scalar = Scalar([
     0x2d2f_c049_658a_fd43,
 ]);
 
+#[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
+const ROOT_OF_UNITY_INV: Scalar = Scalar([
+    0x0fb4_d6e1_3cf1_9a78,
+    0x6f67_d4a2_b566_f833,
+    0xed4f_2f74_a35d_0168,
+    0x0538_a6f6_6e19_c653,
+]);
+
 /// GENERATOR^{2^s} where t * 2^s + 1 = q with t odd.
 /// In other words, this is a t root of unity.
+#[cfg(not(all(target_os = "zkvm", target_arch = "riscv32")))]
 const DELTA: Scalar = Scalar([
     0x70e3_10d3_d146_f96a,
     0x4b64_c089_19e2_99e6,
     0x51e1_1418_6a8b_970d,
     0x6185_d066_27c0_67cb,
+]);
+
+#[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
+const DELTA: Scalar = Scalar([
+    0x6c08_3479_5901_89d7,
+    0xf650_2437_c6a0_9c00,
+    0x43ca_b354_fabb_0062,
+    0x0863_4d0a_a021_aaf8,
 ]);
 
 impl Default for Scalar {
@@ -242,9 +300,17 @@ impl Scalar {
     }
 
     /// Returns one, the multiplicative identity.
+    #[cfg(not(all(target_os = "zkvm", target_arch = "riscv32")))]
     #[inline]
     pub const fn one() -> Scalar {
         R
+    }
+
+    /// RISCZero patch: Non-Montgomery.
+    #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
+    #[inline]
+    pub const fn one() -> Scalar {
+        Scalar([1, 0, 0, 0])
     }
 
     /// Doubles this field element.
@@ -285,7 +351,10 @@ impl Scalar {
 
         // Convert to Montgomery form by computing
         // (a.R^0 * R^2) / R = a.R
-        tmp *= &R2;
+        #[cfg(not(all(target_os = "zkvm", target_arch = "riscv32")))]
+        {
+            tmp *= &R2;
+        }
 
         CtOption::new(tmp, Choice::from(is_some))
     }
@@ -295,7 +364,11 @@ impl Scalar {
     pub fn to_bytes(&self) -> [u8; 32] {
         // Turn into canonical form by computing
         // (a.R) / R = a
+        #[cfg(not(all(target_os = "zkvm", target_arch = "riscv32")))]
         let tmp = Scalar::montgomery_reduce(self.0[0], self.0[1], self.0[2], self.0[3], 0, 0, 0, 0);
+
+        #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
+        let tmp = self;
 
         let mut res = [0; 32];
         res[0..8].copy_from_slice(&tmp.0[0].to_le_bytes());
@@ -338,7 +411,11 @@ impl Scalar {
         let d0 = Scalar([limbs[0], limbs[1], limbs[2], limbs[3]]);
         let d1 = Scalar([limbs[4], limbs[5], limbs[6], limbs[7]]);
         // Convert to Montgomery form
-        d0 * R2 + d1 * R3
+        #[cfg(not(all(target_os = "zkvm", target_arch = "riscv32")))]
+        return d0 * R2 + d1 * R3;
+
+        #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))] //TODO: untested
+        return d0 * R + d1 * R2;
     }
 
     /// Converts from an integer represented in little endian
@@ -355,6 +432,7 @@ impl Scalar {
     }
 
     /// Squares this element.
+    #[cfg(not(all(target_os = "zkvm", target_arch = "riscv32")))]
     #[inline]
     pub const fn square(&self) -> Scalar {
         let (r1, carry) = mac(0, self.0[0], self.0[1], 0);
@@ -384,6 +462,18 @@ impl Scalar {
         let (r7, _) = adc(0, r7, carry);
 
         Scalar::montgomery_reduce(r0, r1, r2, r3, r4, r5, r6, r7)
+    }
+
+    /// RISCZero patch: non-Montgomery mult
+    #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
+    #[inline]
+    pub fn square(&self) -> Scalar {
+        let mut result = [0u32; 8];
+        let inp: [u32; 8] = bytemuck::cast(self.0);
+        let prime: [u32; 8] = bytemuck::cast(MODULUS.0);
+        field::modmul_256(&inp, &inp, &prime, &mut result);
+        let ret: [u64; 4] = bytemuck::cast(result);
+        Scalar(ret)
     }
 
     /// Exponentiates `self` by `by`, where `by` is a
@@ -536,6 +626,7 @@ impl Scalar {
         CtOption::new(Scalar(ret), Choice::from(1u8))
     }
 
+    #[cfg(not(all(target_os = "zkvm", target_arch = "riscv32")))]
     #[inline(always)]
     const fn montgomery_reduce(
         r0: u64,

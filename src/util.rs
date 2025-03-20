@@ -13,6 +13,7 @@ pub const fn sbb(a: u64, b: u64, borrow: u64) -> (u64, u64) {
 }
 
 /// Compute a + (b * c) + carry, returning the result and the new carry over.
+#[cfg(not(all(target_os = "zkvm", target_arch = "riscv32")))]
 #[inline(always)]
 pub const fn mac(a: u64, b: u64, c: u64, carry: u64) -> (u64, u64) {
     let ret = (a as u128) + ((b as u128) * (c as u128)) + (carry as u128);
