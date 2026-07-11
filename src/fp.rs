@@ -316,8 +316,12 @@ impl Fp {
         #[cfg(not(all(target_os = "zkvm", target_arch = "riscv32")))]
         return d0 * R2 + d1 * R3;
 
-        #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))] //TODO: untested
-        return d0 * R + d1 * R2;
+        // Non-Montgomery: interpret the 768-bit integer as d0 + d1 * 2^384.
+        // R holds 2^384 mod p in canonical form, so this is d0 + d1 * R.
+        // (The previous `d0 * R + d1 * R2` form was a leftover of the Montgomery
+        // reduction identity and is off by a factor of R; see PR discussion.)
+        #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
+        return d0 + d1 * R;
     }
 
     /// Returns whether or not this element is strictly lexicographically

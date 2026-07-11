@@ -16,6 +16,38 @@
 
 risc0_zkvm::guest::entry!(main);
 
+
+fn test_from_bytes_wide_non_mont_reduction() {
+    // LE 512-bit integer confined to the low 64 bits must match Scalar::from(u64).
+    let mut lo = [0u8; 64];
+    lo[0] = 42;
+    assert_eq!(
+        bls12_381::Scalar::from_bytes_wide(&lo),
+        bls12_381::Scalar::from(42u64)
+    );
+
+    // Integer 3 * 2^256: only limb at byte offset 32 set to 3.
+    // Non-Mont path: d0=0, d1=3 → 3*R. Wrong Mont leftover would yield 3*R^2.
+    let mut hi = [0u8; 64];
+    hi[32] = 3;
+    let s_hi = bls12_381::Scalar::from_bytes_wide(&hi);
+
+    let mut one_shift = [0u8; 64];
+    one_shift[32] = 1;
+    let shift = bls12_381::Scalar::from_bytes_wide(&one_shift);
+    assert_eq!(s_hi, shift + shift + shift);
+
+    // Combined 7 + 2^256
+    let mut both = [0u8; 64];
+    both[0] = 7;
+    both[32] = 1;
+    assert_eq!(
+        bls12_381::Scalar::from_bytes_wide(&both),
+        bls12_381::Scalar::from(7u64) + shift
+    );
+}
+
+
 fn test_pairing_result_against_relic() {
     let a = bls12_381::G1Affine::generator();
     let b = bls12_381::G2Affine::generator();
@@ -120,4 +152,5 @@ fn test_pairing_result_against_relic() {
 
 fn main() {
     test_pairing_result_against_relic();
+    test_from_bytes_wide_non_mont_reduction();
 }
