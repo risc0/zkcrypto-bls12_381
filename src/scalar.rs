@@ -414,8 +414,12 @@ impl Scalar {
         #[cfg(not(all(target_os = "zkvm", target_arch = "riscv32")))]
         return d0 * R2 + d1 * R3;
 
-        #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))] //TODO: untested
-        return d0 * R + d1 * R2;
+        // Non-Montgomery: interpret the 512-bit integer as d0 + d1 * 2^256.
+        // R holds 2^256 mod q in canonical form, so this is d0 + d1 * R.
+        // (The previous `d0 * R + d1 * R2` form was a leftover of the Montgomery
+        // reduction identity and is off by a factor of R.)
+        #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
+        return d0 + d1 * R;
     }
 
     /// Converts from an integer represented in little endian
